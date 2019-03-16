@@ -105,16 +105,6 @@ AliAnalysisTaskGammaPHOSPP::AliAnalysisTaskGammaPHOSPP(const char *name)
     fVtx0[i] = 0;
     fVtx5[i] = 0;
   } 
-  //  fWeightFunction= new TF1("fWeightFunction", "1.0", 0., 99999.) ;
-
-    fWeightFunction= new TF1("fWeightFunction", "([0]+[1]*x+[2]*x*x)/(1.+[3]*x+[4]*x*x)+[5]*x", 0.1, 40) ;
-    
-    fWeightFunction->SetParameter(0,3.02640e-01);
-    fWeightFunction->SetParameter(1,8.59672e-01);
-    fWeightFunction->SetParameter(2,5.39777e-01);
-    fWeightFunction->SetParameter(3,9.82832e-02 );
-    fWeightFunction->SetParameter(4,1.27487e+00);
-    fWeightFunction->SetParameter(5,3.73416e-03);
     
 }
 
@@ -642,6 +632,12 @@ void AliAnalysisTaskGammaPHOSPP::UserExec(Option_t *)
       else
         fPHOSGeo = AliPHOSGeometry::GetInstance("Run2");
   }
+
+
+  if(fEvent->GetRunNumber() > 224994)
+    fWeightFunction= new TF1("fWeightFunction", "1.0", 0., 99999.) ;
+  else
+    fWeightFunction= new TF1("fWeightFunction", "(3.02640e-01 + 8.59672e-01*x + 5.39777e-01*x*x)/(1.+ 9.82832e-02 *x+1.27487e+00 *x*x)+3.73416e-03*x", 0., 99999.) ;
 
   fAllEventCounter++;
 

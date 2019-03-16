@@ -1198,12 +1198,11 @@ void AliAnalysisTaskGammaPHOSPP::SelectClusters(AliAODCaloCluster *clu1)
       return;
     }
     
-    if(fEvent->GetRunNumber() > 209122)
-    {
-      if(clu1->GetType() != AliVCluster::kPHOSNeutral)      return;
-      if(TMath::Abs(clu1->GetTOF()) > 12.5e-9 && !fMCArray) return; // TOF cut
-    }
-         
+    if(clu1->GetType() == AliVCluster::kPHOSCharged)  
+      return;
+    if(fEvent->GetRunNumber() > 224994 && !fMCArray && TMath::Abs(clu1->GetTOF()) > 12.5e-9) 
+      return; // TOF cut for real data only!
+    
     multPHOSClust[0]++;
     FillHistogram("hClusterEnergy",energy);
     FillHistogram("hCellMultClu_all",digMult);

@@ -120,7 +120,7 @@ void runTaskGammaPHOS13TeV( Bool_t isMC    =  kFALSE,
         Int_t evN;
         ifstream ff;
         if(isMC)
-          ff.open("datasets/%s.txt");
+          ff.open("datasets/%s.dat");
         else  
           ff.open(Form("datasets/%s-pass1.txt", period.Data()));
         while( !ff.eof() )

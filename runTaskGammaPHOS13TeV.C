@@ -108,7 +108,10 @@ void runTaskGammaPHOS13TeV( Bool_t isMC    =  kFALSE,
         else
         {
            alienHandler->SetGridDataDir(Form("/alice/data/%d/%s", year, period.Data()));
+          if(!period.Contains("LHC16k") && !period.Contains("LHC16l") )
            alienHandler->SetDataPattern("/pass1/AOD208/*/AliAOD.root");
+          else
+           alienHandler->SetDataPattern("/pass2/AOD208/*/AliAOD.root");
            alienHandler->SetRunPrefix("000");
         }
         // define the output folders

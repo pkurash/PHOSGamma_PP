@@ -1030,7 +1030,7 @@ void AliAnalysisTaskGammaPHOSPP::ProcessMC()
 
        if(TMath::Abs(particle->GetPdgCode()) == 111)
        {
-          FillHistogram("fhPi0MC",particle->Pt(),particle->Y(), Weight(particle));
+          FillHistogram("fhPi0MC", particle->Pt(), particle->Y(), Weight(particle));
           snprintf(partName, 10, "pi0") ;
        }
        else if(TMath::Abs(particle->GetPdgCode()) == 221)
@@ -1052,8 +1052,8 @@ void AliAnalysisTaskGammaPHOSPP::ProcessMC()
        else
        if(TMath::Abs(particle->GetPdgCode()) == 22)
        {
-            FillHistogram("fhGammaMC_all",particle->Pt(),particle->Y(), Weight(particle)); 
-            Int_t label1=particle->GetMother(); 
+            FillHistogram("fhGammaMC_all", particle->Pt(), particle->Y(), Weight(particle)); 
+            Int_t label1 = particle->GetMother(); 
             if(label1==-1) 
             { 	     
  	       FillHistogram("fhGammaMC_true", particle->Pt(), particle->Y(), Weight(particle));
@@ -1083,12 +1083,12 @@ void AliAnalysisTaskGammaPHOSPP::ProcessMC()
 			                  && TMath::Abs(particle2->GetPdgCode())!=310)
                               {
 			         FillHistogram("fhGammaMC_true",particle->Pt(),
-                                                particle->Y(),Weight(particle));
-			         FillHistogram("fhGammaMCSources",particle->Pt(),111);
+                                                particle->Y(), Weight(particle));
+			         FillHistogram("fhGammaMCSources", particle->Pt(),111);
 		              }
 			      else 
-			         FillHistogram("fhGammaMCSources",particle->Pt(),
-				                  particle2->GetPdgCode(),Weight(particle));
+			         FillHistogram("fhGammaMCSources", particle->Pt(),
+				                  particle2->GetPdgCode(), Weight(particle));
 			  }  
 		     }
               }
@@ -1656,35 +1656,50 @@ void AliAnalysisTaskGammaPHOSPP::MixPhotons()
 
 Int_t AliAnalysisTaskGammaPHOSPP::GetPrimaryLabelAtVertex(AliVCluster *clu)
 {
-   if (!fMCArray) 
-      return 0;
+   if(!fMCArray) 
+     return 0;
       
    Int_t iPrimaryAtVertex = clu->GetLabel();
    AliAODMCParticle *particle0 =  (AliAODMCParticle*) fMCArray->At(iPrimaryAtVertex);
-     
-   while(TMath::Hypot(particle0 -> Xv(),particle0 -> Yv()) > 1.0)
+
+   while(TMath::Hypot(particle0 -> Xv(), particle0 -> Yv()) > 1.0)
    {
       FillHistogram("htest",0.5);
       iPrimaryAtVertex = particle0->GetMother();
-      particle0 = (AliAODMCParticle*) fMCArray->At(iPrimaryAtVertex);
+      particle0 = (AliAODMCParticle*) fMCArray->At(particle0->GetMother());
    }
 
-   if(particle0->GetPdgCode() == 22 && particle0->GetMother() > -1)
+
+   for(Int_t i = 0; i < fMCArray->GetEntriesFast(); i++)
    {
-      Int_t label0 = particle0->GetMother();
-      AliAODMCParticle *particleM= (AliAODMCParticle*) fMCArray->At(label0);
+     AliAODMCParticle* particle =  (AliAODMCParticle*) fMCArray->At(i);
+     if(particle->GetPdgCode() != 310 && particle->GetPdgCode() != 130) continue;
+     Int_t iSecondDaughter = particle->GetDaughterLabel(1); 
+     if(iSecondDaughter != iPrimaryAtVertex) continue;
+     else
+       iPrimaryAtVertex = i;
+   }
+/*
+   if(particle0->GetMother() < 0) 
+     iPrimaryAtVertex = particle0->Label();
+   else
+   {
+     if((particle0->GetPdgCode() == 22 || TMath::Abs(particle0->GetPdgCode()) == 11))
+     {
+      AliAODMCParticle *particleM = (AliAODMCParticle*)fMCArray->At(particle0->GetMother());
       if( particleM->GetPdgCode() == 111 && particleM->GetMother() > -1)
       {
-         Int_t label1 = particleM->GetMother(); 
-	 AliAODMCParticle *particleMM = (AliAODMCParticle*) fMCArray->At(label1);
-         if(particleMM->GetPdgCode() == 130 || particleMM->GetPdgCode() == 310)
-            iPrimaryAtVertex = label1;
-	 else	 
-            iPrimaryAtVertex = label0; 
+	 AliAODMCParticle *particleMM = (AliAODMCParticle*)fMCArray->At(particleM->GetMother());
+         if(!(particleMM->GetPdgCode() == 130) && !(particleMM->GetPdgCode() == 310))
+            iPrimaryAtVertex = particle0->Label();
+         else
+            iPrimaryAtVertex = particleM->GetMother();
       }
-	    else 
-	    iPrimaryAtVertex = label0;
-     }
+      else  
+         iPrimaryAtVertex = particle0->Label();    
+      } 
+    } 
+*/     
    return iPrimaryAtVertex;   
 }
 
@@ -1692,8 +1707,8 @@ Int_t AliAnalysisTaskGammaPHOSPP::GetPrimaryLabelAtVertex(AliVCluster *clu)
 
 Int_t AliAnalysisTaskGammaPHOSPP::GetPrimaryLabel(AliVCluster *clu)
 {
-   if (!fMCArray) 
-      return 0;
+   if(!fMCArray) 
+     return 0;
       
    return clu->GetLabel();
 }

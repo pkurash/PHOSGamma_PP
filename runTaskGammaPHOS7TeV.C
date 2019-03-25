@@ -97,7 +97,7 @@ void runTaskGammaPHOS7TeV( Bool_t isMC    =  kFALSE,
         
         // select the aliphysics version. all other packages
         // are LOADED AUTOMATICALLY!
-        alienHandler->SetAliPhysicsVersion("vAN-20190304-1");
+        alienHandler->SetAliPhysicsVersion("vAN-20190322_ROOT6-1");
         // set the Alien API version
         alienHandler->SetAPIVersion("V1.1x");
         
@@ -135,14 +135,14 @@ void runTaskGammaPHOS7TeV( Bool_t isMC    =  kFALSE,
          nn = nn + 1;
         }
         ff.close();
-        for(Int_t  i = 0; i < nn; i ++)
+        for(Int_t  i = nn - 4; i < nn; i ++)
             alienHandler->AddRunNumber(evN[i]);
 
         // number of files per subjob
         alienHandler->SetSplitMaxInputFileNumber(40);
         alienHandler->SetExecutable("myTask.sh");
         alienHandler->SetJDLName("myTask.jdl");
-         alienHandler->SetTTL(10800);
+         alienHandler->SetTTL(21600);
 
         alienHandler->SetOutputToRunNo(kTRUE);
         alienHandler->SetKeepLogs(kTRUE);

@@ -103,12 +103,13 @@ void runTaskGammaPHOS7TeV( Bool_t isMC    =  kFALSE,
         
         // select the input data        
         Int_t year = 2010;
-        if(period.Contains("10")) year = 2010;
-        if(period.Contains("11")) year = 2011;
-        if(period.Contains("12")) year = 2012;
-        if(period.Contains("13")) year = 2013; 
-        if(period.Contains("14")) year = 2014;
-        if(period.Contains("15")) year = 2015;                               
+        if(period.Contains("LHC10")) year = 2010;
+        if(period.Contains("LHC11")) year = 2011;
+        if(period.Contains("LHC12")) year = 2012;
+        if(period.Contains("LHC13")) year = 2013; 
+        if(period.Contains("LHC14")) year = 2014;
+        if(period.Contains("LHC15")) year = 2015;   
+        cout << "year = " << year << ", period = " << period.Data() << endl;                                                         
         if(isMC)
         {
            alienHandler->SetGridDataDir(Form("/alice/sim/%d/%s", year, period.Data()));

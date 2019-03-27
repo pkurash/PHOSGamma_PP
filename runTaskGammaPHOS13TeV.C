@@ -103,6 +103,7 @@ void runTaskGammaPHOS13TeV( Bool_t isMC    =  kFALSE,
         cout << "year = " << year << ", period = " << period.Data() << endl;                             
         if(isMC)
         {
+           Printf(Form("/alice/sim/%d/%s", year, period.Data()));                
            alienHandler->SetGridDataDir(Form("/alice/sim/%d/%s", year, period.Data()));
            alienHandler->SetDataPattern("AOD/*/AliAOD.root");
         }
@@ -124,7 +125,7 @@ void runTaskGammaPHOS13TeV( Bool_t isMC    =  kFALSE,
         Int_t evN;
         ifstream ff;
         if(isMC)
-          ff.open("datasets/%s.dat");
+          ff.open(Form*("datasets/%s.dat", period.Data());
         else  
           ff.open(Form("datasets/%s-pass1.txt", period.Data()));
         while( !ff.eof() )

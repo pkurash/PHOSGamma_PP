@@ -94,10 +94,13 @@ void runTaskGammaPHOS13TeV( Bool_t isMC    =  kFALSE,
         
         // select the input data        
         Int_t year = 2015;
-        if(period.Contains("15")) year = 2015;
-        if(period.Contains("16")) year = 2016;
-        if(period.Contains("17")) year = 2017;
-        if(period.Contains("18")) year = 2018; 
+        if(period.Contains("LHC15")) year = 2015;
+        if(period.Contains("LHC16")) year = 2016;
+        if(period.Contains("LHC17")) year = 2017;
+        if(period.Contains("LHC18")) year = 2018; 
+        if(period.Contains("LHC19")) year = 2019;
+        if(period.Contains("LHC20")) year = 2020;  
+        cout << "year = " << year << ", period = " << period.Data() << endl;                             
         if(isMC)
         {
            alienHandler->SetGridDataDir(Form("/alice/sim/%d/%s", year, period.Data()));

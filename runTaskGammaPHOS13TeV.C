@@ -88,7 +88,7 @@ void runTaskGammaPHOS13TeV( Bool_t isMC    =  kFALSE,
         alienHandler->SetAnalysisSource("AliAnalysisTaskGammaPHOSPP.cxx");
         // select the aliphysics version. all other packages
         // are LOADED AUTOMATICALLY!
-        alienHandler->SetAliPhysicsVersion("vAN-20190306_ROOT6-1");
+        alienHandler->SetAliPhysicsVersion("vAN-20190322_ROOT6-1");
         alienHandler->SetAPIVersion("V1.1x");
         
         
@@ -98,8 +98,6 @@ void runTaskGammaPHOS13TeV( Bool_t isMC    =  kFALSE,
         if(period.Contains("16")) year = 2016;
         if(period.Contains("17")) year = 2017;
         if(period.Contains("18")) year = 2018; 
-        if(period.Contains("19")) year = 2019;
-        if(period.Contains("20")) year = 2020;                               
         if(isMC)
         {
            alienHandler->SetGridDataDir(Form("/alice/sim/%d/%s", year, period.Data()));

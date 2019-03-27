@@ -1312,6 +1312,7 @@ void AliAnalysisTaskGammaPHOSPP::FillOnePhotonHistograms(AliCaloPhoton *ph)
       {
         pdg = ((AliAODMCParticle*)fMCArray->At(ph->GetPrimaryAtVertex())) -> GetPdgCode();
         pdg_naive = ((AliAODMCParticle*)fMCArray->At(ph->GetPrimary())) -> GetPdgCode();
+        Printf("pdg_naive = %d, pdg = %d", pdg_naive, pdg);
       }
       Int_t mod1 = ph->Module();
 
@@ -1661,6 +1662,12 @@ Int_t AliAnalysisTaskGammaPHOSPP::GetPrimaryLabelAtVertex(AliVCluster *clu)
       
    Int_t iPrimaryAtVertex = clu->GetLabel();
    AliAODMCParticle *particle0 =  (AliAODMCParticle*) fMCArray->At(iPrimaryAtVertex);
+   
+   if(particle0-> IsSecondaryFromMaterial())
+   {
+     Printf("Secondary from the material, Epart = %f, Eclust = %f" , particle0 ->E(), clu->E());
+   //  return 0;
+   }
 
    while(TMath::Hypot(particle0 -> Xv(), particle0 -> Yv()) > 1.0)
    {
@@ -1669,37 +1676,22 @@ Int_t AliAnalysisTaskGammaPHOSPP::GetPrimaryLabelAtVertex(AliVCluster *clu)
       particle0 = (AliAODMCParticle*) fMCArray->At(particle0->GetMother());
    }
 
+   Int_t nn = iPrimaryAtVertex;
 
-   for(Int_t i = 0; i < fMCArray->GetEntriesFast(); i++)
+   if(particle0->GetPdgCode() == 22 || particle0->GetPdgCode() == 11)
    {
-     AliAODMCParticle* particle =  (AliAODMCParticle*) fMCArray->At(i);
-     if(particle->GetPdgCode() != 310 && particle->GetPdgCode() != 130) continue;
-     Int_t iSecondDaughter = particle->GetDaughterLabel(1); 
-     if(iSecondDaughter != iPrimaryAtVertex) continue;
-     else
-       iPrimaryAtVertex = i;
-   }
-/*
-   if(particle0->GetMother() < 0) 
-     iPrimaryAtVertex = particle0->Label();
-   else
-   {
-     if((particle0->GetPdgCode() == 22 || TMath::Abs(particle0->GetPdgCode()) == 11))
+     for(Int_t i = 0; i < nn /*fMCArray->GetEntriesFast()*/; i++)
      {
-      AliAODMCParticle *particleM = (AliAODMCParticle*)fMCArray->At(particle0->GetMother());
-      if( particleM->GetPdgCode() == 111 && particleM->GetMother() > -1)
-      {
-	 AliAODMCParticle *particleMM = (AliAODMCParticle*)fMCArray->At(particleM->GetMother());
-         if(!(particleMM->GetPdgCode() == 130) && !(particleMM->GetPdgCode() == 310))
-            iPrimaryAtVertex = particle0->Label();
-         else
-            iPrimaryAtVertex = particleM->GetMother();
-      }
-      else  
-         iPrimaryAtVertex = particle0->Label();    
-      } 
-    } 
-*/     
+       AliAODMCParticle* particle =  (AliAODMCParticle*) fMCArray->At(i);
+       if(particle->GetPdgCode() != 310 && particle->GetPdgCode() != 130) continue;
+       Int_t iSecondDaughter = particle->GetDaughterLabel(1); 
+       if(iSecondDaughter != iPrimaryAtVertex) continue;
+       else
+         iPrimaryAtVertex = i;
+     }
+   }
+   else iPrimaryAtVertex = nn;
+  
    return iPrimaryAtVertex;   
 }
 

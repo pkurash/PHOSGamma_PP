@@ -98,8 +98,6 @@ void runTaskGammaPHOS13TeV( Bool_t isMC    =  kFALSE,
         if(period.Contains("LHC16")) year = 2016;
         if(period.Contains("LHC17")) year = 2017;
         if(period.Contains("LHC18")) year = 2018; 
-        if(period.Contains("LHC19")) year = 2019;
-        if(period.Contains("LHC20")) year = 2020;  
                              
         if(isMC)
         {
@@ -124,7 +122,7 @@ void runTaskGammaPHOS13TeV( Bool_t isMC    =  kFALSE,
         Int_t evN;
         ifstream ff;
         if(isMC)
-          ff.open(Form("datasets/%s.dat", period.Data()));
+          ff.open(Form("datasets/runs_%s.dat", period.Data()));
         else  
           ff.open(Form("datasets/%s-pass1.txt", period.Data()));
         while( !ff.eof() )

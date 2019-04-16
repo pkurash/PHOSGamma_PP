@@ -1751,6 +1751,9 @@ Double_t AliAnalysisTaskGammaPHOSPP::Weight(AliAODMCParticle *particleAtVertex)
 {
   if(!fMCArray) 
      return 1.0;
+     
+  if(fEvent->GetRunNumber() > 224994)
+     return 1.0;   
    
    if(particleAtVertex-> IsSecondaryFromMaterial())
    {

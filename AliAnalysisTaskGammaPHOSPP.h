@@ -88,7 +88,7 @@ private:
   Bool_t               fCheckMCCrossSection; // retrieve from the pyxsec.root file only if requested
   Float_t              fAvgTrials;         // avg trials
 
-  TF1   *fWeightFunction;
+  TF1   *fWeightFunction, *fWeightFunction2;
   Double_t Weight(AliAODMCParticle *particle);
   void Sumw2Histogram(const char * key) const;
   Bool_t PhotonWithinPeak(Double_t Minv, Double_t pt);

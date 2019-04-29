@@ -1664,7 +1664,6 @@ Int_t AliAnalysisTaskGammaPHOSPP::GetPrimaryLabelAtVertex(AliVCluster *clu)
 
    while(TMath::Hypot(particle0 -> Xv(), particle0 -> Yv()) > 1.0)
    {
-      FillHistogram("htest",0.5);
       iPrimaryAtVertex = particle0->GetMother();
       particle0 = (AliAODMCParticle*) fMCArray->At(particle0->GetMother());
    }
@@ -1688,6 +1687,42 @@ Int_t AliAnalysisTaskGammaPHOSPP::GetPrimaryLabelAtVertex(AliVCluster *clu)
    return iPrimaryAtVertex;   
 }
 
+//=================================== Returns label ============================
+
+Int_t AliAnalysisTaskGammaPHOSPP::GetPrimaryLabelAtVertex(AliAODMCParticle* particle0)
+{
+   
+   if(particle0-> IsSecondaryFromMaterial())
+   {
+   //  return 0;
+   }
+   
+   Int_t iPrimaryAtVertex = particle0->GetLabel();
+
+   while(TMath::Hypot(particle0 -> Xv(), particle0 -> Yv()) > 1.0)
+   {
+      iPrimaryAtVertex = particle0->GetMother();
+      particle0 = (AliAODMCParticle*) fMCArray->At(particle0->GetMother());
+   }
+
+   Int_t nn = iPrimaryAtVertex;
+
+   if(particle0->GetPdgCode() == 22 || particle0->GetPdgCode() == 11)
+   {
+     for(Int_t i = 0; i < fMCArray->GetEntriesFast(); i++)
+     {
+       AliAODMCParticle* particle =  (AliAODMCParticle*) fMCArray->At(i);
+       if(particle->GetPdgCode() != 310 && particle->GetPdgCode() != 130) continue;
+       Int_t iSecondDaughter = particle->GetDaughterLabel(1); 
+       if(iSecondDaughter != iPrimaryAtVertex) continue;
+       else
+         iPrimaryAtVertex = i;
+     }
+   }
+   else iPrimaryAtVertex = nn;
+  
+   return iPrimaryAtVertex;   
+}
 //=============================================================================
 
 Int_t AliAnalysisTaskGammaPHOSPP::GetPrimaryLabel(AliVCluster *clu)
@@ -1739,48 +1774,34 @@ Int_t AliAnalysisTaskGammaPHOSPP::TestTrack(AliAODTrack *track)
 //=======================================
 Double_t AliAnalysisTaskGammaPHOSPP::Weight(AliAODMCParticle *particleAtVertex)
 {
-  if(!fMCArray) 
+   Double_t  pt = particleAtVertex->Pt();
+   
+   if(!fMCArray) 
      return 1.0;
-     
-   if(particleAtVertex-> IsSecondaryFromMaterial())
-   {
-  //   Printf("Secondary from the material, Epart = %f" , particleAtVertex->E());
-     return 0;
-   }
    
-   Int_t iPrimaryAtVertex = particleAtVertex->Label();
+   Int_t iPrimaryAtVertex =   GetPrimaryLabelAtVertex(particleAtVertex);
    
-   while(TMath::Hypot(particleAtVertex -> Xv(), particleAtVertex -> Yv()) > 1.0 ||      
-         TMath::Abs(particleAtVertex->GetPdgCode()) == 22)
-   {
-      iPrimaryAtVertex = particleAtVertex->GetMother();
-      particleAtVertex = (AliAODMCParticle*)fMCArray->At(iPrimaryAtVertex);
-   }
-   
-
+   particleAtVertex = (AliAODMCParticle*) fMCArray->At(iPrimaryAtVertex);
+ 
    if(TMath::Abs(particleAtVertex->GetPdgCode()) == 111)
-      fWeightFunction2->SetParameters(0.611073, -0.0222529, 0.190541, -0.416579, 0.396059, 0.611073);
-   else  if(TMath::Abs(particleAtVertex->GetPdgCode()) == 221 || 
+      fWeightFunction2->SetParameters(0.611073, -0.0222529, 0.190541, -0.416579, 0.396059, 0.611073); /*
+    else  if(TMath::Abs(particleAtVertex->GetPdgCode()) == 221 || 
             TMath::Abs(particleAtVertex->GetPdgCode()) == 331 ||
             TMath::Abs(particleAtVertex->GetPdgCode()) == 223 )
-            fWeightFunction2->SetParameters(0.0601459, 0, 4.11665, 0, 6.46838, -0.00319589);  
-         else  if(TMath::Abs(particleAtVertex->GetPdgCode()) == 130 ||
-                  TMath::Abs(particleAtVertex->GetPdgCode()) == 310 ||
-                  TMath::Abs(particleAtVertex->GetPdgCode()) == 311 ||
-                  TMath::Abs(particleAtVertex->GetPdgCode()) == 321 )
-                  fWeightFunction2->SetParameters(0.708656, 0.355564, -0.00468263, 0.0570132, 0.076876, 0.0382327);
-               else if(TMath::Abs(particleAtVertex->GetPdgCode()) > 1000)
-                       fWeightFunction2->SetParameters(0.215726, 0.292934, 0.163074, -0.460113, 0.219988, -0.0903996);
-                    else fWeightFunction2->SetParameters(1.0, 0., 0., 0., 0., 0.);
+            fWeightFunction2->SetParameters(0.0601459, 0, 4.11665, 0, 6.46838, -0.00319589);
+            else  if(TMath::Abs(particleAtVertex->GetPdgCode()) == 130 ||
+                    TMath::Abs(particleAtVertex->GetPdgCode()) == 310 ||
+                    TMath::Abs(particleAtVertex->GetPdgCode()) == 311 ||
+                    TMath::Abs(particleAtVertex->GetPdgCode()) == 321 )
+                    fWeightFunction2->SetParameters(0.708656, 0.355564, -0.00468263, 0.0570132, 0.076876, 0.0382327);
+                  else if(TMath::Abs(particleAtVertex->GetPdgCode()) > 1000)
+                         fWeightFunction2->SetParameters(0.215726, 0.292934, 0.163074, -0.460113, 0.219988, -0.0903996);
+                       else*/ fWeightFunction2->SetParameters(1.0, 0., 0., 0., 0., 0.);
                     
-   Double_t pt = particleAtVertex->Pt();
-
-  if(fEvent->GetRunNumber() > 224994)
-  {
+   if(fEvent->GetRunNumber() > 224994)
      fWeightFunction2->SetParameters(-5.4392, 6.6713, 3.12637, 8.11749, 4.17771, 0.0102885);
-  }   
   
-  return fWeightFunction2->Eval(pt);
+   return fWeightFunction2->Eval(pt);
 } 
 
 //=======================================

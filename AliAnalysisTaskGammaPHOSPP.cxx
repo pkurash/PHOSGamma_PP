@@ -107,7 +107,7 @@ AliAnalysisTaskGammaPHOSPP::AliAnalysisTaskGammaPHOSPP(const char *name)
     fVtx5[i] = 0;
   } 
     
-   fWeightFunction2 = new TF1("fWeightFunction2", "([0] + [1]*x + [2]*x*x)/(1. + [3]*x + [4]*x*x) + [5]*x", 0.1, 400); 
+   fWeightFunction2 = new TF1("fWeightFunction2", "([0] + [1]*x + [2]*x*x)/(1. + [3]*x + [4]*x*x) + [5]*x", 0.1, 40); 
 }
 
 //________________________________________________________________________
@@ -1171,20 +1171,13 @@ void AliAnalysisTaskGammaPHOSPP::SelectClusters(AliAODCaloCluster *clu1)
   Int_t    mod1, relId[4], cellAbsId, cellX, cellZ;
   Float_t  position[3];  
   Int_t digMult;
-  Double_t energy;
-  Double_t weight = 1.0;
-
-
-
-//  for (Int_t ic = 0; ic < multClust; ic ++) 
-//  {
-//    AliAODCaloCluster *clu1 = fEvent->GetCaloCluster(ic);
+  Double_t energy, weight;
 
     if(!clu1->IsPHOS() ) return;
          
     clu1->GetPosition(position);
     TVector3 global1(position) ;
-    //fPHOSGeo->GlobalPos2RelId(global1,relId) ;
+    //fPHOSGeo->GlobalPos2RelId(global1,relId) ; 
     
     cellAbsId = clu1->GetCellAbsId(0);
     fPHOSGeo->AbsToRelNumbering(cellAbsId,relId);
@@ -1267,6 +1260,11 @@ void AliAnalysisTaskGammaPHOSPP::SelectClusters(AliAODCaloCluster *clu1)
 
       FillHistogram("hEmcCPVDistance", clu1->GetEmcCpvDistance());
       TestMatchingTrackPID(clu1, p11.Pt());
+      
+      if(!fMCArray)
+        weight = 1.0;
+      else
+        weight = Weight((AliAODMCParticle*)fMCArray->At(clu1->GetLabel()));       
      
       new((*fPHOSEvent)[fInPHOS]) AliCaloPhoton(p1.X(),p1.Py(),p1.Z(),p1.E()) ;
       AliCaloPhoton * ph = (AliCaloPhoton*)fPHOSEvent->At(fInPHOS) ;
@@ -1290,14 +1288,6 @@ void AliAnalysisTaskGammaPHOSPP::SelectClusters(AliAODCaloCluster *clu1)
 
       fInPHOS++ ;
       
-//   }
-/*     
-   FillHistogram("hPHOSClusterMult",   multPHOSClust[0]);
-   FillHistogram("hPHOSClusterMultM1", multPHOSClust[1]);
-   FillHistogram("hPHOSClusterMultM2", multPHOSClust[2]);
-   FillHistogram("hPHOSClusterMultM3", multPHOSClust[3]);
-   FillHistogram("hPHOSClusterMultM4", multPHOSClust[4]);
-*/
 }
 
 //===========================================================================
@@ -1752,44 +1742,22 @@ Double_t AliAnalysisTaskGammaPHOSPP::Weight(AliAODMCParticle *particleAtVertex)
   if(!fMCArray) 
      return 1.0;
      
-  if(fEvent->GetRunNumber() > 224994)
-     return 1.0;   
-   
    if(particleAtVertex-> IsSecondaryFromMaterial())
    {
   //   Printf("Secondary from the material, Epart = %f" , particleAtVertex->E());
      return 0;
    }
-
+   
    Int_t iPrimaryAtVertex = particleAtVertex->Label();
    
-   while(TMath::Hypot(particleAtVertex -> Xv(), particleAtVertex -> Yv()) > 1.0)
+   while(TMath::Hypot(particleAtVertex -> Xv(), particleAtVertex -> Yv()) > 1.0 ||      
+         TMath::Abs(particleAtVertex->GetPdgCode()) == 22)
    {
       iPrimaryAtVertex = particleAtVertex->GetMother();
-      particleAtVertex = (AliAODMCParticle*)fMCArray->At(particleAtVertex->GetMother());
+      particleAtVertex = (AliAODMCParticle*)fMCArray->At(iPrimaryAtVertex);
    }
+   
 
-/*
-   Int_t nn = iPrimaryAtVertex;
-
-   if(particle->GetPdgCode() == 22 || particle->GetPdgCode() == 11)
-   {
-     for(Int_t i = 0; i < nn; i++)
-     {
-       AliAODMCParticle* particle =  (AliAODMCParticle*) fMCArray->At(i);
-       if(particle->GetPdgCode() != 310 && particle->GetPdgCode() != 130) continue;
-       Int_t iSecondDaughter = particle->GetDaughterLabel(1); 
-       if(iSecondDaughter != iPrimaryAtVertex) continue;
-       else
-         iPrimaryAtVertex = i;
-     }
-   }
-   else 
-      iPrimaryAtVertex = nn;
-    
-        Printf("11111");
-   AliAODMCParticle *particleAtVertex = (AliAODMCParticle*)fMCArray->At(iPrimaryAtVertex);      
- */
    if(TMath::Abs(particleAtVertex->GetPdgCode()) == 111)
       fWeightFunction2->SetParameters(0.611073, -0.0222529, 0.190541, -0.416579, 0.396059, 0.611073);
    else  if(TMath::Abs(particleAtVertex->GetPdgCode()) == 221 || 
@@ -1806,8 +1774,13 @@ Double_t AliAnalysisTaskGammaPHOSPP::Weight(AliAODMCParticle *particleAtVertex)
                     else fWeightFunction2->SetParameters(1.0, 0., 0., 0., 0., 0.);
                     
    Double_t pt = particleAtVertex->Pt();
-   
-   return fWeightFunction2->Eval(pt);
+
+  if(fEvent->GetRunNumber() > 224994)
+  {
+     fWeightFunction2->SetParameters(-5.4392, 6.6713, 3.12637, 8.11749, 4.17771, 0.0102885);
+  }   
+  
+  return fWeightFunction2->Eval(pt);
 } 
 
 //=======================================

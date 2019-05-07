@@ -553,6 +553,10 @@ void AliAnalysisTaskGammaPHOSPP::UserCreateOutputObjects()
 
   fOutputContainer2->Add(new TH2F("fhPi0MC", "MC distribution of #pi^{0}-s ", nPt,ptMin,ptMax, 240, -1.2, 1.2));
   Sumw2Histogram("fhPi0MC");
+  fOutputContainer2->Add(new TH2F("fhPiPlus", "MC distribution of #pi^{+}-s ", nPt,ptMin,ptMax, 240, -1.2, 1.2));
+  Sumw2Histogram("fhPiPlus"); 
+  fOutputContainer2->Add(new TH2F("fhPiMinus", "MC distribution of #pi^{-}-s ", nPt,ptMin,ptMax, 240, -1.2, 1.2));
+  Sumw2Histogram("fhPiMinus");    
   fOutputContainer2->Add(new  TH2F("fhEtaMC", "MC distribution of #eta^{0}-s ", nPt,ptMin,ptMax, 240, -1.2, 1.2));
   Sumw2Histogram("fhEtaMC");
   fOutputContainer2->Add(new  TH2F("fhEtaPrimeMC", "MC distribution of #eta'", nPt,ptMin,ptMax,240, -1.2, 1.2));
@@ -567,6 +571,10 @@ void AliAnalysisTaskGammaPHOSPP::UserCreateOutputObjects()
   Sumw2Histogram("fhGammaMC_all");
   fOutputContainer2->Add(new  TH2F("fhGammaMC_true", "MC distribution of #gamma-s", nPt,ptMin,ptMax, 240, -1.2, 1.2));
   Sumw2Histogram("fhGammaMC_true");
+    fOutputContainer2->Add(new  TH2F("fhGammaMC_FromMaterial", "MC distribution of #gamma-s", nPt,ptMin,ptMax, 240, -1.2, 1.2));
+  Sumw2Histogram("fhGammaMC_FromMaterial");
+    fOutputContainer2->Add(new  TH2F("fhBetaMC_FromMaterial", "MC distribution of #gamma-s", nPt,ptMin,ptMax, 240, -1.2, 1.2));
+  Sumw2Histogram("fhBetaMC_FromMaterial");  
   fOutputContainer2->Add(new  TH2F("fhGammaMCSources", "MC distribution of #gamma-s", nPt,ptMin,ptMax, 8000, -4000,4000));
   Sumw2Histogram("fhGammaMCSources");
     fOutputContainer2->Add(new  TH2F("fhProtonMC", "MC distribution of protons", nPt,ptMin,ptMax, 240, -1.2, 1.2));
@@ -590,6 +598,9 @@ void AliAnalysisTaskGammaPHOSPP::UserCreateOutputObjects()
     Sumw2Histogram(Form("hClustPdgvsPt_%s_naive", cut[iCut].Data()));
     fOutputContainer2->Add(new TH2F(Form("hMatrixEff_%s", cut[iCut].Data()), "Efficiency matrix ", 400, 0., 40., 400, 0., 40.)); 
    }
+
+    fOutputContainer2->Add(new TH2F("hClustPdgvsPt_FromMaterial", "Cluster pdg vs p_{T} from material" ,nPt,ptMin,ptMax,8000, -4000,4000));
+
 
    fOutputContainer->Add(new TH1F("htest","Count events", 1, 0, 1));
    fOutputContainer->Add(new TH1F("hEventCounter","Count accepted events", 1, 0, 1));
@@ -1028,74 +1039,55 @@ void AliAnalysisTaskGammaPHOSPP::ProcessMC()
    for(Int_t i = 0; i < fMCArray->GetEntriesFast(); i++)
    {
        AliAODMCParticle* particle =  (AliAODMCParticle*) fMCArray->At(i);
+       
        FillHistogram("hMCTrackCharge", particle->Charge());
 
        if(TMath::Abs(particle->GetPdgCode()) == 111)
-       {
-          FillHistogram("fhPi0MC", particle->Pt(), particle->Y(), Weight(particle));
-          snprintf(partName, 10, "pi0") ;
-       }
+         FillHistogram("fhPi0MC", particle->Pt(), particle->Y(), Weight(particle));
+       else if(particle->GetPdgCode() == 211)
+         FillHistogram("fhPiPlus", particle->Pt(), particle->Y(), Weight(particle)); 
+       else if(particle->GetPdgCode() == -211)
+         FillHistogram("fhPiMinus", particle->Pt(), particle->Y(), Weight(particle));                  
        else if(TMath::Abs(particle->GetPdgCode()) == 221)
-           FillHistogram("fhEtaMC", particle->Pt(), particle->Y(), Weight(particle)); 
+            FillHistogram("fhEtaMC", particle->Pt(), particle->Y(), Weight(particle)); 
        else if(TMath::Abs(particle->GetPdgCode()) == 331)
-           FillHistogram("fhEtaPrimeMC", particle->Pt(), particle->Y(), Weight(particle)); 
+            FillHistogram("fhEtaPrimeMC", particle->Pt(), particle->Y(), Weight(particle)); 
        else if(TMath::Abs(particle->GetPdgCode()) == 223)
-           FillHistogram("fhOmegaMC", particle->Pt(), particle->Y(), Weight(particle)); 
+            FillHistogram("fhOmegaMC", particle->Pt(), particle->Y(), Weight(particle)); 
        else if(TMath::Abs(particle->GetPdgCode()) == 130)
-           FillHistogram("fhK0LMC", particle->Pt(), particle->Y(), Weight(particle));        
+            FillHistogram("fhK0LMC", particle->Pt(), particle->Y(), Weight(particle));        
        else if(TMath::Abs(particle->GetPdgCode()) == 310)
-           FillHistogram("fhK0SMC", particle->Pt(), particle->Y(),  Weight(particle));         
+            FillHistogram("fhK0SMC", particle->Pt(), particle->Y(),  Weight(particle));         
        else if(TMath::Abs(particle->GetPdgCode() == 2212)) 
-           FillHistogram("fhProtonMC",particle->Pt(), particle->Y(), Weight(particle));
+            FillHistogram("fhProtonMC",particle->Pt(), particle->Y(), Weight(particle));
        else if(TMath::Abs(particle->GetPdgCode()==2112)) 
-           FillHistogram("fhNeutrMC",particle->Pt(), particle->Y(), Weight(particle));
+            FillHistogram("fhNeutrMC",particle->Pt(), particle->Y(), Weight(particle));
        else if(TMath::Abs(particle->GetPdgCode()==321)) 
-           FillHistogram("fhKchMC",particle->Pt(), particle->Y(), Weight(particle));
+            FillHistogram("fhKchMC",particle->Pt(), particle->Y(), Weight(particle));
        else
-       if(TMath::Abs(particle->GetPdgCode()) == 22)
+       if(TMath::Abs(particle->GetPdgCode()) == 22 || TMath::Abs(particle->GetPdgCode()) == 11)
        {
-            FillHistogram("fhGammaMC_all", particle->Pt(), particle->Y(), Weight(particle)); 
-            Int_t label1 = particle->GetMother(); 
-            if(label1==-1) 
-            { 	     
- 	       FillHistogram("fhGammaMC_true", particle->Pt(), particle->Y(), Weight(particle));
-	       FillHistogram("fhGammaMCSources", particle->Pt(), 22, Weight(particle));
-             }
-             else
-             {
- 		    AliAODMCParticle *particle1 =  (AliAODMCParticle*) fMCArray->At(label1);
-	            if(particle1->GetPdgCode()!=111)
-                    {		
-                        FillHistogram("fhGammaMCSources", particle->Pt(), 
-                        particle1->GetPdgCode(), Weight(particle));
-			FillHistogram("fhGammaMC_true",particle->Pt(),particle->Y(), Weight(particle));
-                     }
-	             else
-                     {
-			 if(particle1->IsPrimary())
-                         {
-			    FillHistogram("fhGammaMC_true",particle->Pt(), particle->Y(), Weight(particle));
-                            FillHistogram("fhGammaMCSources",particle->Pt(),111,Weight(particle));
-                          }
-			  else
-                          {
-			      Int_t label2=particle1->GetMother();
-			      AliAODMCParticle *particle2 =  (AliAODMCParticle*) fMCArray->At(label2);
-			      if(TMath::Abs(particle2->GetPdgCode())!=130 
-			                  && TMath::Abs(particle2->GetPdgCode())!=310)
-                              {
-			         FillHistogram("fhGammaMC_true",particle->Pt(),
-                                                particle->Y(), Weight(particle));
-			         FillHistogram("fhGammaMCSources", particle->Pt(),111);
-		              }
-			      else 
-			         FillHistogram("fhGammaMCSources", particle->Pt(),
-				                  particle2->GetPdgCode(), Weight(particle));
-			  }  
-		     }
-              }
-       }      
-       continue ;
+           if(particle->IsSecondaryFromMaterial())
+              FillHistogram(Form("fh%sMC_FromMaterial",  particle->GetPdgCode() == 22 ? "Gamma" : "Beta"), particle->Pt(), particle->Y(), Weight(particle));              
+           else 
+           {
+              Int_t iMother = particle->GetMother();
+              AliAODMCParticle* mparticle = (AliAODMCParticle*) fMCArray->At(iMother);
+              if(mparticle->GetPdgCode() == 111 && mparticle->GetLabel() > -1) 
+              {
+                Int_t iMother2 = mparticle->GetMother();
+                if(((AliAODMCParticle*) fMCArray->At(iMother2))->GetPdgCode() == 310 ||
+                   ((AliAODMCParticle*) fMCArray->At(iMother2))->GetPdgCode() == 130)
+                     mparticle = (AliAODMCParticle*) fMCArray->At(iMother2);
+              } 
+              FillHistogram("fhGammaMCSources", particle->Pt(), 
+                            mparticle->GetPdgCode(), Weight(mparticle));
+              if(TMath::Hypot(particle->Xv(), particle->Yv()) < 1.0 &&
+                 mparticle->GetPdgCode() != 130 &&
+                 mparticle->GetPdgCode() != 310)              
+                 FillHistogram("fhGammaMC_true", particle->Pt(), particle->Y(), Weight(mparticle));          
+           }     
+        }
    }
   
   
@@ -1260,11 +1252,13 @@ void AliAnalysisTaskGammaPHOSPP::SelectClusters(AliAODCaloCluster *clu1)
 
       FillHistogram("hEmcCPVDistance", clu1->GetEmcCpvDistance());
       TestMatchingTrackPID(clu1, p11.Pt());
+      Int_t iPrimaryAtVertex = GetPrimaryLabelAtVertex(clu1);
       
       if(!fMCArray)
         weight = 1.0;
-      else
-        weight = Weight((AliAODMCParticle*)fMCArray->At(clu1->GetLabel()));       
+      else 
+        weight = Weight((AliAODMCParticle*)fMCArray->At(iPrimaryAtVertex));       
+       
      
       new((*fPHOSEvent)[fInPHOS]) AliCaloPhoton(p1.X(),p1.Py(),p1.Z(),p1.E()) ;
       AliCaloPhoton * ph = (AliCaloPhoton*)fPHOSEvent->At(fInPHOS) ;
@@ -1305,7 +1299,6 @@ void AliAnalysisTaskGammaPHOSPP::FillOnePhotonHistograms(AliCaloPhoton *ph)
         pdg = ((AliAODMCParticle*)fMCArray->At(ph->GetPrimaryAtVertex())) -> GetPdgCode();
         pdg_naive = ((AliAODMCParticle*)fMCArray->At(ph->GetPrimary())) -> GetPdgCode();
         weight = Weight((AliAODMCParticle*)fMCArray->At(ph->GetPrimaryAtVertex()));
-        Printf("pdg_naive = %d, pdg = %d", pdg_naive, pdg);
       }
       Int_t mod1 = ph->Module();
 
@@ -1658,11 +1651,12 @@ Int_t AliAnalysisTaskGammaPHOSPP::GetPrimaryLabelAtVertex(AliVCluster *clu)
    
    if(particle0-> IsSecondaryFromMaterial())
    {
-     Printf("Secondary from the material, Epart = %f, Eclust = %f" , particle0 ->E(), clu->E());
+    // Printf("Secondary from the material, Epart = %f, Eclust = %f" , particle0 ->E(), clu->E());
    //  return 0;
+     FillHistogram("hClustPdgvsPt_FromMaterial", clu->E(), particle0->GetPdgCode());
    }
 
-   while(TMath::Hypot(particle0 -> Xv(), particle0 -> Yv()) > 1.0)
+   while(TMath::Hypot(particle0->Xv(), particle0->Yv()) > 1.0)
    {
       iPrimaryAtVertex = particle0->GetMother();
       particle0 = (AliAODMCParticle*) fMCArray->At(particle0->GetMother());
@@ -1672,7 +1666,8 @@ Int_t AliAnalysisTaskGammaPHOSPP::GetPrimaryLabelAtVertex(AliVCluster *clu)
 
    if(particle0->GetPdgCode() == 22 || particle0->GetPdgCode() == 11)
    {
-     for(Int_t i = 0; i < nn /*fMCArray->GetEntriesFast()*/; i++)
+     //iPrimaryAtVertex = particle0->GetMother();
+     for(Int_t i = 0; i < nn ; i++)
      {
        AliAODMCParticle* particle =  (AliAODMCParticle*) fMCArray->At(i);
        if(particle->GetPdgCode() != 310 && particle->GetPdgCode() != 130) continue;
@@ -1687,42 +1682,6 @@ Int_t AliAnalysisTaskGammaPHOSPP::GetPrimaryLabelAtVertex(AliVCluster *clu)
    return iPrimaryAtVertex;   
 }
 
-//=================================== Returns label ============================
-
-Int_t AliAnalysisTaskGammaPHOSPP::GetPrimaryLabelAtVertex(AliAODMCParticle* particle0)
-{
-   
-   if(particle0-> IsSecondaryFromMaterial())
-   {
-   //  return 0;
-   }
-   
-   Int_t iPrimaryAtVertex = particle0->GetLabel();
-
-   while(TMath::Hypot(particle0 -> Xv(), particle0 -> Yv()) > 1.0)
-   {
-      iPrimaryAtVertex = particle0->GetMother();
-      particle0 = (AliAODMCParticle*) fMCArray->At(particle0->GetMother());
-   }
-
-   Int_t nn = iPrimaryAtVertex;
-
-   if(particle0->GetPdgCode() == 22 || particle0->GetPdgCode() == 11)
-   {
-     for(Int_t i = 0; i < fMCArray->GetEntriesFast(); i++)
-     {
-       AliAODMCParticle* particle =  (AliAODMCParticle*) fMCArray->At(i);
-       if(particle->GetPdgCode() != 310 && particle->GetPdgCode() != 130) continue;
-       Int_t iSecondDaughter = particle->GetDaughterLabel(1); 
-       if(iSecondDaughter != iPrimaryAtVertex) continue;
-       else
-         iPrimaryAtVertex = i;
-     }
-   }
-   else iPrimaryAtVertex = nn;
-  
-   return iPrimaryAtVertex;   
-}
 //=============================================================================
 
 Int_t AliAnalysisTaskGammaPHOSPP::GetPrimaryLabel(AliVCluster *clu)
@@ -1774,34 +1733,35 @@ Int_t AliAnalysisTaskGammaPHOSPP::TestTrack(AliAODTrack *track)
 //=======================================
 Double_t AliAnalysisTaskGammaPHOSPP::Weight(AliAODMCParticle *particleAtVertex)
 {
-   Double_t  pt = particleAtVertex->Pt();
-   
+
    if(!fMCArray) 
      return 1.0;
-   
-   Int_t iPrimaryAtVertex =   GetPrimaryLabelAtVertex(particleAtVertex);
-   
-   particleAtVertex = (AliAODMCParticle*) fMCArray->At(iPrimaryAtVertex);
- 
-   if(TMath::Abs(particleAtVertex->GetPdgCode()) == 111)
-      fWeightFunction2->SetParameters(0.611073, -0.0222529, 0.190541, -0.416579, 0.396059, 0.611073); /*
+     
+   if(TMath::Abs(particleAtVertex->GetPdgCode()) == 11 ||
+      TMath::Abs(particleAtVertex->GetPdgCode()) == 22)   
+      particleAtVertex = (AliAODMCParticle*)fMCArray->At(particleAtVertex->GetMother());
+     
+   if(TMath::Abs(particleAtVertex->GetPdgCode()) == 111 || 
+      TMath::Abs(particleAtVertex->GetPdgCode()) == 211 )
+      fWeightFunction2->SetParameters(0.611073, -0.0222529, 0.190541, -0.416579, 0.396059, 0.611073);
     else  if(TMath::Abs(particleAtVertex->GetPdgCode()) == 221 || 
-            TMath::Abs(particleAtVertex->GetPdgCode()) == 331 ||
-            TMath::Abs(particleAtVertex->GetPdgCode()) == 223 )
-            fWeightFunction2->SetParameters(0.0601459, 0, 4.11665, 0, 6.46838, -0.00319589);
-            else  if(TMath::Abs(particleAtVertex->GetPdgCode()) == 130 ||
+             TMath::Abs(particleAtVertex->GetPdgCode()) == 331 ||
+             TMath::Abs(particleAtVertex->GetPdgCode()) == 223 )
+             fWeightFunction2->SetParameters(0.0601459, 0, 4.11665, 0, 6.46838, -0.00319589);
+          else  if(TMath::Abs(particleAtVertex->GetPdgCode()) == 130 ||
                     TMath::Abs(particleAtVertex->GetPdgCode()) == 310 ||
                     TMath::Abs(particleAtVertex->GetPdgCode()) == 311 ||
                     TMath::Abs(particleAtVertex->GetPdgCode()) == 321 )
                     fWeightFunction2->SetParameters(0.708656, 0.355564, -0.00468263, 0.0570132, 0.076876, 0.0382327);
-                  else if(TMath::Abs(particleAtVertex->GetPdgCode()) > 1000)
-                         fWeightFunction2->SetParameters(0.215726, 0.292934, 0.163074, -0.460113, 0.219988, -0.0903996);
-                       else*/ fWeightFunction2->SetParameters(1.0, 0., 0., 0., 0., 0.);
-                    
+                else if(TMath::Abs(particleAtVertex->GetPdgCode()) > 1000)
+                        fWeightFunction2->SetParameters(0.215726, 0.292934, 0.163074, -0.460113, 0.219988, -0.0903996);
+                     else fWeightFunction2->SetParameters(1.0, 0., 0., 0., 0., 0.);
+              
+                                  
    if(fEvent->GetRunNumber() > 224994)
      fWeightFunction2->SetParameters(-5.4392, 6.6713, 3.12637, 8.11749, 4.17771, 0.0102885);
-  
-   return fWeightFunction2->Eval(pt);
+
+   return fWeightFunction2->Eval(particleAtVertex->Pt());
 } 
 
 //=======================================

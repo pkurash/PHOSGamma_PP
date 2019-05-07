@@ -78,7 +78,6 @@ private:
   Double_t TestGammaPt(AliCaloPhoton *ph);
   Int_t GetPrimaryLabel(AliVCluster *clu);
   Int_t GetPrimaryLabelAtVertex(AliVCluster *clu);
-  Int_t GetPrimaryLabelAtVertex(AliAODMCParticle *particle);  
   Int_t TestTrack(AliAODTrack *track);
   Int_t TestBC(Double_t tof) ;
 

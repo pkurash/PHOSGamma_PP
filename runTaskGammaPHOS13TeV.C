@@ -132,7 +132,7 @@ void runTaskGammaPHOS13TeV( Bool_t isMC    =  kFALSE,
         }
         ff.close();
  
-        for(Int_t i = 0; i < nn; i++)       
+        for(Int_t i = nn - 95; i < nn; i++)       
           alienHandler->AddRunNumber(Nrun[i]);
        
         alienHandler->SetSplitMaxInputFileNumber(40);

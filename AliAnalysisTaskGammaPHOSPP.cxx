@@ -80,6 +80,7 @@ AliAnalysisTaskGammaPHOSPP::AliAnalysisTaskGammaPHOSPP(const char *name)
   fPIDResponse(0x0), //!
   fWeightFunction(0),
   fWeightFunction2(0),
+  fWeightFunction3(0),  
   fCurrFileName(0), 
   fCheckMCCrossSection(kFALSE),
   fh1Xsec(0),      
@@ -108,6 +109,15 @@ AliAnalysisTaskGammaPHOSPP::AliAnalysisTaskGammaPHOSPP(const char *name)
   } 
     
    fWeightFunction2 = new TF1("fWeightFunction2", "([0] + [1]*x + [2]*x*x)/(1. + [3]*x + [4]*x*x) + [5]*x", 0.1, 40); 
+   
+   fWeightFunction3 = new TF1("fWeightFunction3", "([0] + [1]*x + TMath::Exp([2]*x))/(1. + [3]*x + TMath::Exp([4]*x*x)) + [5]*x", 0.1, 40) ;
+   
+   fWeightFunction3->SetParameter(0, -2.10686e+03);
+   fWeightFunction3->SetParameter(1, 4.43642e+03);
+   fWeightFunction3->SetParameter(2, 2.23735e-01);
+   fWeightFunction3->SetParameter(3, 5.25038e+03);     
+   fWeightFunction3->SetParameter(4, -2.08287e+00);
+   fWeightFunction3->SetParameter(5, -1.07012e-02);   
 }
 
 //________________________________________________________________________
@@ -651,6 +661,8 @@ void AliAnalysisTaskGammaPHOSPP::UserExec(Option_t *)
     fWeightFunction= new TF1("fWeightFunction", "1.0", 0., 99999.) ;
   else
     fWeightFunction= new TF1("fWeightFunction", "(3.02640e-01 + 8.59672e-01*x + 5.39777e-01*x*x)/(1.+ 9.82832e-02 *x+1.27487e+00 *x*x)+3.73416e-03*x", 0., 99999.) ;
+    
+    
 
   fAllEventCounter++;
 
@@ -1066,7 +1078,9 @@ void AliAnalysisTaskGammaPHOSPP::ProcessMC()
             FillHistogram("fhKchMC",particle->Pt(), particle->Y(), Weight(particle));
        else
        if(TMath::Abs(particle->GetPdgCode()) == 22 || TMath::Abs(particle->GetPdgCode()) == 11)
-       {
+       {    
+           if(TMath::Abs(particle->GetPdgCode()) == 22)
+              FillHistogram("fhGammaMC_all", particle->Pt(), particle->Y());
            if(particle->IsSecondaryFromMaterial())
               FillHistogram(Form("fh%sMC_FromMaterial",  particle->GetPdgCode() == 22 ? "Gamma" : "Beta"), particle->Pt(), particle->Y(), Weight(particle));              
            else 
@@ -1084,7 +1098,8 @@ void AliAnalysisTaskGammaPHOSPP::ProcessMC()
                             mparticle->GetPdgCode(), Weight(mparticle));
               if(TMath::Hypot(particle->Xv(), particle->Yv()) < 1.0 &&
                  mparticle->GetPdgCode() != 130 &&
-                 mparticle->GetPdgCode() != 310)              
+                 mparticle->GetPdgCode() != 310 &&
+                 particle->GetPdgCode() == 22)              
                  FillHistogram("fhGammaMC_true", particle->Pt(), particle->Y(), Weight(mparticle));          
            }     
         }
@@ -1273,6 +1288,8 @@ void AliAnalysisTaskGammaPHOSPP::SelectClusters(AliAODCaloCluster *clu1)
       ph->SetBC(TestBC(clu1->GetTOF()));
       ph->SetPrimary(GetPrimaryLabel(clu1));
       ph->SetPrimaryAtVertex(GetPrimaryLabelAtVertex(clu1));
+      
+      weight = fWeightFunction3->Eval(ph->Pt());//!!!!
       ph->SetWeight(weight); 
       
       FillHistogram("hvt0vsvt5", p11.Pt()- p1.Pt());
@@ -1736,7 +1753,8 @@ Double_t AliAnalysisTaskGammaPHOSPP::Weight(AliAODMCParticle *particleAtVertex)
 
    if(!fMCArray) 
      return 1.0;
-     
+   return fWeightFunction3->Eval(particleAtVertex->Pt());//!!!!
+           
    if(TMath::Abs(particleAtVertex->GetPdgCode()) == 11 ||
       TMath::Abs(particleAtVertex->GetPdgCode()) == 22)   
       particleAtVertex = (AliAODMCParticle*)fMCArray->At(particleAtVertex->GetMother());

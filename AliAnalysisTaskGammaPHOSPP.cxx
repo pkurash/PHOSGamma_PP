@@ -1096,7 +1096,7 @@ void AliAnalysisTaskGammaPHOSPP::ProcessMC()
                      mparticle = (AliAODMCParticle*) fMCArray->At(iMother2);
               } 
               FillHistogram("fhGammaMCSources", particle->Pt(), 
-                            mparticle->GetPdgCode(), /*Weight(mparticle)*/, weight);
+                            mparticle->GetPdgCode(), /*Weight(mparticle)*/ weight);
               if(TMath::Hypot(particle->Xv(), particle->Yv()) < 1.0 &&
                  mparticle->GetPdgCode() != 130 &&
                  mparticle->GetPdgCode() != 310 &&

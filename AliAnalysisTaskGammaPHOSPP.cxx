@@ -1078,11 +1078,12 @@ void AliAnalysisTaskGammaPHOSPP::ProcessMC()
             FillHistogram("fhKchMC",particle->Pt(), particle->Y(), Weight(particle));
        else
        if(TMath::Abs(particle->GetPdgCode()) == 22 || TMath::Abs(particle->GetPdgCode()) == 11)
-       {    
+       {           
+            Double_t weight = fWeightFunction3->Eval(particle->Pt());
            if(TMath::Abs(particle->GetPdgCode()) == 22)
               FillHistogram("fhGammaMC_all", particle->Pt(), particle->Y());
            if(particle->IsSecondaryFromMaterial())
-              FillHistogram(Form("fh%sMC_FromMaterial",  particle->GetPdgCode() == 22 ? "Gamma" : "Beta"), particle->Pt(), particle->Y(), Weight(particle));              
+              FillHistogram(Form("fh%sMC_FromMaterial",  particle->GetPdgCode() == 22 ? "Gamma" : "Beta"), particle->Pt(), particle->Y(), /*Weight(particle)*/ weight);              
            else 
            {
               Int_t iMother = particle->GetMother();
@@ -1095,12 +1096,12 @@ void AliAnalysisTaskGammaPHOSPP::ProcessMC()
                      mparticle = (AliAODMCParticle*) fMCArray->At(iMother2);
               } 
               FillHistogram("fhGammaMCSources", particle->Pt(), 
-                            mparticle->GetPdgCode(), Weight(mparticle));
+                            mparticle->GetPdgCode(), /*Weight(mparticle)*/, weight);
               if(TMath::Hypot(particle->Xv(), particle->Yv()) < 1.0 &&
                  mparticle->GetPdgCode() != 130 &&
                  mparticle->GetPdgCode() != 310 &&
                  particle->GetPdgCode() == 22)              
-                 FillHistogram("fhGammaMC_true", particle->Pt(), particle->Y(), Weight(mparticle));          
+                 FillHistogram("fhGammaMC_true", particle->Pt(), particle->Y(), /*Weight(mparticle)*/ weight);          
            }     
         }
    }
@@ -1753,7 +1754,6 @@ Double_t AliAnalysisTaskGammaPHOSPP::Weight(AliAODMCParticle *particleAtVertex)
 
    if(!fMCArray) 
      return 1.0;
-   return fWeightFunction3->Eval(particleAtVertex->Pt());//!!!!
            
    if(TMath::Abs(particleAtVertex->GetPdgCode()) == 11 ||
       TMath::Abs(particleAtVertex->GetPdgCode()) == 22)   
@@ -1777,7 +1777,9 @@ Double_t AliAnalysisTaskGammaPHOSPP::Weight(AliAODMCParticle *particleAtVertex)
               
                                   
    if(fEvent->GetRunNumber() > 224994)
-     fWeightFunction2->SetParameters(-5.4392, 6.6713, 3.12637, 8.11749, 4.17771, 0.0102885);
+     return fWeightFunction3->Eval(particleAtVertex->Pt());
+     //fWeightFunction2->SetParameters(-5.4392, 6.6713, 3.12637, 8.11749, 4.17771, 0.0102885);
+
 
    return fWeightFunction2->Eval(particleAtVertex->Pt());
 } 

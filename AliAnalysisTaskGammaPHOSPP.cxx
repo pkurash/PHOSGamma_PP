@@ -416,12 +416,17 @@ void AliAnalysisTaskGammaPHOSPP::UserCreateOutputObjects()
    fOutputContainer->Add(new TH2F("hMinv_disp_all","Invariant mass vs pt Disp-all",nM, mMin, mMax, nPt, ptMin, ptMax));
    fOutputContainer->Add(new TH2F("hMinv_disp_all_mix","Invariant mass vs pt Disp-all",nM, mMin, mMax, nPt, ptMin, ptMax));
 
-
    fOutputContainer->Add(new TH2F("hMinv_anticpv_all","Invariant mass vs pt antiCPV-all",nM, mMin, mMax, nPt, ptMin, ptMax));
    fOutputContainer->Add(new TH2F("hMinv_anticpv_all_mix","Invariant mass vs pt antiCPV-all",nM, mMin, mMax, nPt, ptMin, ptMax));
 
    fOutputContainer->Add(new TH2F("hMinv_cpv_all","Invariant mass vs pt CPV-all",nM, mMin, mMax, nPt, ptMin, ptMax));
    fOutputContainer->Add(new TH2F("hMinv_cpv_all_mix","Invariant mass vs pt CPV-all",nM, mMin, mMax, nPt, ptMin, ptMax));
+
+   fOutputContainer->Add(new TH2F("hMinv_antiboth_all","Invariant mass vs pt anti(CPV+Disp)-all",nM, mMin, mMax, nPt, ptMin, ptMax));
+   fOutputContainer->Add(new TH2F("hMinv_antiboth_all_mix","Invariant mass vs pt anti(CPV+Disp)-all",nM, mMin, mMax, nPt, ptMin, ptMax));
+
+   fOutputContainer->Add(new TH2F("hMinv_both_all","Invariant mass vs pt (CPV+Disp)-all",nM, mMin, mMax, nPt, ptMin, ptMax));
+   fOutputContainer->Add(new TH2F("hMinv_both_all_mix","Invariant mass vs pt (CPV+Disp)-all",nM, mMin, mMax, nPt, ptMin, ptMax));
 
   fOutputContainer ->Add(new TH1F("hTrackCharge","Charge of track", 9, -4.5, 4.5));
   fOutputContainer2->Add(new TH1F("hMCTrackCharge","Charge of MC track", 9, -4.5, 4.5));
@@ -549,7 +554,7 @@ void AliAnalysisTaskGammaPHOSPP::UserCreateOutputObjects()
 
    fOutputContainer2->Add(new TH2F("hEnTrackvsClust","Energies of track vs cluster",nPt,ptMin,ptMax,nPt,ptMin,ptMax));
 
-   fOutputContainer2->Add(new TH1F("hEmcCPVDistance","EMS to CPV distance",100,0.,100.));
+   fOutputContainer2->Add(new TH1F("hEmcCPVDistance","EMC to CPV distance",100,0.,100.));
 
    fOutputContainer2->Add(new TH1F("hDistance","Distance from cluster to associated track, cm",100,0.,100.));
 
@@ -606,10 +611,14 @@ void AliAnalysisTaskGammaPHOSPP::UserCreateOutputObjects()
     fOutputContainer2->Add(new TH2F(Form("hClustPdgvsPt_%s_naive", cut[iCut].Data()),"Cluster pdg vs p_{T} (naive)." ,nPt,ptMin,ptMax,8000, -4000,4000));
     Sumw2Histogram(Form("hClustPdgvsPt_%s", cut[iCut].Data()));
     Sumw2Histogram(Form("hClustPdgvsPt_%s_naive", cut[iCut].Data()));
-    fOutputContainer2->Add(new TH2F(Form("hMatrixEff_%s", cut[iCut].Data()), "Efficiency matrix ", 400, 0., 40., 400, 0., 40.)); 
+    fOutputContainer2->Add(new TH2F(Form("hMatrixEff_%s", cut[iCut].Data()), "Efficiency matrix", 400, 0., 40., 400, 0., 40.));
+    fOutputContainer2->Add(new TH2F(Form("hMatrixEff_gamma_%s", cut[iCut].Data()), "Efficiency matrix for #gamma", 400, 0., 40., 400, 0., 40.));     
+    fOutputContainer2->Add(new TH2F(Form("hMatrixEff_beta_%s", cut[iCut].Data()), "Efficiency matrix for #beta^{#pm}", 400, 0., 40., 400, 0., 40.));     
    }
 
     fOutputContainer2->Add(new TH2F("hClustPdgvsPt_FromMaterial", "Cluster pdg vs p_{T} from material" ,nPt,ptMin,ptMax,8000, -4000,4000));
+    
+    fOutputContainer2->Add(new TH1F("hConverted", "Converted photons", 2, 0., 2.));
 
 
    fOutputContainer->Add(new TH1F("htest","Count events", 1, 0, 1));
@@ -906,7 +915,7 @@ Int_t AliAnalysisTaskGammaPHOSPP::GetEventCentrality(AliAODEvent *event)
   Float_t tV0C = event->GetVZEROData()->GetV0CTime();
   FillHistogram("hV0Atime", tV0A);
   FillHistogram("hV0Atime", tV0C);
-  FillHistogram("hV0AV0Ctime", tV0A,tV0C);  
+  FillHistogram("hV0AV0Ctime", tV0A, tV0C);  
   FillHistogram("hTrackMult", trackMult+0.5) ;
 
   Int_t centr = 0;
@@ -1079,11 +1088,10 @@ void AliAnalysisTaskGammaPHOSPP::ProcessMC()
        else
        if(TMath::Abs(particle->GetPdgCode()) == 22 || TMath::Abs(particle->GetPdgCode()) == 11)
        {           
-            Double_t weight = fWeightFunction3->Eval(particle->Pt());
            if(TMath::Abs(particle->GetPdgCode()) == 22)
               FillHistogram("fhGammaMC_all", particle->Pt(), particle->Y());
            if(particle->IsSecondaryFromMaterial())
-              FillHistogram(Form("fh%sMC_FromMaterial",  particle->GetPdgCode() == 22 ? "Gamma" : "Beta"), particle->Pt(), particle->Y(), /*Weight(particle)*/ weight);              
+              FillHistogram(Form("fh%sMC_FromMaterial",  particle->GetPdgCode() == 22 ? "Gamma" : "Beta"), particle->Pt(), particle->Y(), Weight(particle));              
            else 
            {
               Int_t iMother = particle->GetMother();
@@ -1096,12 +1104,12 @@ void AliAnalysisTaskGammaPHOSPP::ProcessMC()
                      mparticle = (AliAODMCParticle*) fMCArray->At(iMother2);
               } 
               FillHistogram("fhGammaMCSources", particle->Pt(), 
-                            mparticle->GetPdgCode(), /*Weight(mparticle)*/ weight);
+                            mparticle->GetPdgCode(), Weight(mparticle));
               if(TMath::Hypot(particle->Xv(), particle->Yv()) < 1.0 &&
                  mparticle->GetPdgCode() != 130 &&
                  mparticle->GetPdgCode() != 310 &&
                  particle->GetPdgCode() == 22)              
-                 FillHistogram("fhGammaMC_true", particle->Pt(), particle->Y(), /*Weight(mparticle)*/ weight);          
+                 FillHistogram("fhGammaMC_true", particle->Pt(), particle->Y(), Weight(mparticle));          
            }     
         }
    }
@@ -1181,7 +1189,7 @@ void AliAnalysisTaskGammaPHOSPP::SelectClusters(AliAODCaloCluster *clu1)
   Int_t digMult;
   Double_t energy, weight;
 
-    if(!clu1->IsPHOS() ) return;
+    if(!clu1->IsPHOS()) return;
          
     clu1->GetPosition(position);
     TVector3 global1(position) ;
@@ -1201,10 +1209,8 @@ void AliAnalysisTaskGammaPHOSPP::SelectClusters(AliAODCaloCluster *clu1)
       return;
     }
     
-    if(clu1->GetType() == AliVCluster::kPHOSCharged)  
-      return;
-    if(fEvent->GetRunNumber() > 224994 && !fMCArray && TMath::Abs(clu1->GetTOF()) > 12.5e-9) 
-      return; // TOF cut for real data only!
+    if(clu1->GetType() != AliVCluster::kPHOSNeutral)  return;
+    if(fEvent->GetRunNumber() > 224994 && !fMCArray && TMath::Abs(clu1->GetTOF()) > 12.5e-9) return; // TOF cut for real data only!
     
     multPHOSClust[0]++;
     FillHistogram("hClusterEnergy",energy);
@@ -1262,10 +1268,19 @@ void AliAnalysisTaskGammaPHOSPP::SelectClusters(AliAODCaloCluster *clu1)
       FillHistogram("hPhotonPx", pX);
       FillHistogram("hPhotonPy", pY);
 
-      if(clu1->E()       < 0.3) return;
-      if(clu1->GetNCells() < 3) return ;       
-      if(clu1->GetM02() < 0.2)  return ;    
-
+      if(fEvent->GetRunNumber() > 224994)
+      {
+         if(clu1->E()       < 0.3) return;
+         if(clu1->GetNCells() < 3) return ;       
+         if(clu1->GetM02() < 0.1)  return ;    
+      }
+      else
+      {
+         if(clu1->E() < 0.1) return;
+         if(clu1->E() > 1. && clu1->GetNCells() < 3) return;
+         if(clu1->E() > 1. && clu1->GetM02() < 0.1) return;
+      } 
+ 
       FillHistogram("hEmcCPVDistance", clu1->GetEmcCpvDistance());
       TestMatchingTrackPID(clu1, p11.Pt());
       Int_t iPrimaryAtVertex = GetPrimaryLabelAtVertex(clu1);
@@ -1289,8 +1304,6 @@ void AliAnalysisTaskGammaPHOSPP::SelectClusters(AliAODCaloCluster *clu1)
       ph->SetBC(TestBC(clu1->GetTOF()));
       ph->SetPrimary(GetPrimaryLabel(clu1));
       ph->SetPrimaryAtVertex(GetPrimaryLabelAtVertex(clu1));
-      
-      weight = fWeightFunction3->Eval(ph->Pt());//!!!!
       ph->SetWeight(weight); 
       
       FillHistogram("hvt0vsvt5", p11.Pt()- p1.Pt());
@@ -1321,7 +1334,15 @@ void AliAnalysisTaskGammaPHOSPP::FillOnePhotonHistograms(AliCaloPhoton *ph)
       Int_t mod1 = ph->Module();
 
       Double_t ww = 1;
-      if(pdg == 22) FillHistogram("hMatrixEff_all", p11.Pt(), TestGammaPt(ph), weight);       
+      if(pdg == 22)
+      {
+         FillHistogram("hMatrixEff_all", p11.Pt(), TestGammaPt(ph), weight);   
+         if(pdg_naive == 22)     
+           FillHistogram("hMatrixEff_gamma_all", p11.Pt(), TestGammaPt(ph), weight); 
+         if(TMath::Abs(pdg_naive) == 11)     
+           FillHistogram("hMatrixEff_beta_all", p11.Pt(), TestGammaPt(ph), weight); 
+      } 
+
 
       FillHistogram("hClustPt_all", p11.Pt(), weight );
       FillHistogram("hClustPdgvsPt_all", p11.Pt(), pdg, weight);
@@ -1341,7 +1362,14 @@ void AliAnalysisTaskGammaPHOSPP::FillOnePhotonHistograms(AliCaloPhoton *ph)
         FillHistogram("hCentralityvsClustPt_cpv", p11.Pt(), fEventCentrality + 0.5, weight);	
         FillHistogram(Form("hClustPt_cpv_mod%d", mod1),  p11.Pt(), weight);
 
-        if(pdg == 22) FillHistogram("hMatrixEff_cpv", p11.Pt(), TestGammaPt(ph), weight);       
+        if(pdg == 22)
+        {
+          FillHistogram("hMatrixEff_cpv", p11.Pt(), TestGammaPt(ph), weight);
+          if(pdg_naive == 22)
+            FillHistogram("hMatrixEff_gamma_cpv", p11.Pt(), TestGammaPt(ph), weight);
+          if(TMath::Abs(pdg_naive) == 11)
+            FillHistogram("hMatrixEff_beta_cpv", p11.Pt(), TestGammaPt(ph), weight);  
+        }        
 
       }
       if(ph->IsDispOK())
@@ -1354,7 +1382,14 @@ void AliAnalysisTaskGammaPHOSPP::FillOnePhotonHistograms(AliCaloPhoton *ph)
         FillHistogram("hCentralityvsClustPt_disp", p11.Pt(), fEventCentrality + 0.5, weight);	
         FillHistogram(Form("hClustPt_disp_mod%d", mod1),  p11.Pt(), weight);
 
-        if(pdg == 22) FillHistogram("hMatrixEff_disp", p11.Pt(), TestGammaPt(ph), weight);       
+        if(pdg == 22)
+        {
+          FillHistogram("hMatrixEff_disp", p11.Pt(), TestGammaPt(ph), weight);
+          if(pdg_naive == 22)
+            FillHistogram("hMatrixEff_gamma_disp", p11.Pt(), TestGammaPt(ph), weight);
+          if(TMath::Abs(pdg_naive) == 11)
+            FillHistogram("hMatrixEff_beta_disp", p11.Pt(), TestGammaPt(ph), weight);  
+        }                    
 
       }
       if( ph->IsCPVOK() && ph->IsDispOK())
@@ -1367,7 +1402,14 @@ void AliAnalysisTaskGammaPHOSPP::FillOnePhotonHistograms(AliCaloPhoton *ph)
         FillHistogram("hCentralityvsClustPt_both", p11.Pt(), fEventCentrality + 0.5, weight);	
         FillHistogram(Form("hClustPt_both_mod%d", mod1),  p11.Pt(), weight);
 
-        if(pdg == 22) FillHistogram("hMatrixEff_both", p11.Pt(), TestGammaPt(ph), weight);       
+        if(pdg == 22)
+        {
+          FillHistogram("hMatrixEff_both", p11.Pt(), TestGammaPt(ph), weight);
+          if(pdg_naive == 22)
+            FillHistogram("hMatrixEff_gamma_both", p11.Pt(), TestGammaPt(ph), weight);
+          if(TMath::Abs(pdg_naive) == 11)
+            FillHistogram("hMatrixEff_beta_both", p11.Pt(), TestGammaPt(ph), weight);  
+        }      
       }
 }
 
@@ -1390,7 +1432,7 @@ void AliAnalysisTaskGammaPHOSPP::FillTwoPhotonHistograms()
       Double_t pt12 = p12.Pt();
       Double_t w = fWeightFunction->Eval(pt12);
 
-      if (ph1->GetNCells()>2 && ph2->GetNCells()>2) 
+      if (ph1->GetNCells() > 2 && ph2->GetNCells() > 2) 
       {
         FillHistogram("hMassPtA10", ma12 , pt12, w );
         FillHistogram("hMassPtvA10", pv12.M(), pv12.Pt(), w);
@@ -1398,12 +1440,16 @@ void AliAnalysisTaskGammaPHOSPP::FillTwoPhotonHistograms()
         FillHistogram("hMassSingle_all", ma12,ph1->Pt(), w) ;
         FillHistogram("hMassSingle_all", ma12,ph2->Pt(), w) ;
 
-        FillHistogram("hMinv_all_all",ma12,ph1->Pt()); //!!!!!!!!!!!!!!!!!
+        FillHistogram("hMinv_all_all", ma12,ph1->Pt()); //!!!!!!!!!!!!!!!!!
 	if(!ph1->IsDispOK()) FillHistogram("hMinv_antidisp_all",ma12,ph1->Pt());//!!!!!!!!!!
-	if(ph1->IsDispOK()) FillHistogram("hMinv_disp_all",ma12,ph1->Pt());//!!!!!!!!!!
+	if(ph1->IsDispOK()) FillHistogram("hMinv_disp_all", ma12,ph1->Pt());//!!!!!!!!!!
 
 	if(!ph1->IsCPVOK())FillHistogram("hMinv_anticpv_all",ma12,ph1->Pt());//!!!!!!!!!!
 	if(ph1->IsCPVOK()) FillHistogram("hMinv_cpv_all",ma12,ph1->Pt());//!!!!!!!!!!
+
+    if(!ph1->IsCPVOK() && !ph1->IsDispOK())FillHistogram("hMinv_antiboth_all",ma12,ph1->Pt());//!!!!!!!!!!
+	if(ph1->IsCPVOK()  && ph1->IsDispOK()) FillHistogram("hMinv_both_all",ma12,ph1->Pt());//!!!!!!!!!!
+
 
         if(i2 + 1 == fInPHOS )
         {
@@ -1562,14 +1608,28 @@ void AliAnalysisTaskGammaPHOSPP::MixPhotons()
         FillHistogram("hMiMassPtCA10",ma12 ,pt12, fEventCentrality+0.5);
         FillHistogram("hMiMassSingle_all",ma12,ph1->Pt(),wm) ;
         FillHistogram("hMiMassSingle_all",ma12,ph2->Pt(),wm) ;
-	//if(!eventVtxExist)
-	  FillHistogram("hMiMassPtA10nvtx",ma12 ,pt12,wm );
-	//if(eventVtxExist)
-	  FillHistogram("hMiMassPtA10vtx"  ,ma12 ,pt12,wm );
-	//if(eventVtxExist && eventV0AND)
-	  FillHistogram("hMiMassPtA10V0AND",ma12 ,pt12,wm );
-	//if(eventPileup)
-	  FillHistogram("hMiMassPtA10PU"   ,ma12 ,pt12 );
+	    //if(!eventVtxExist)
+	    FillHistogram("hMiMassPtA10nvtx",ma12 ,pt12,wm );
+    	//if(eventVtxExist)
+	    FillHistogram("hMiMassPtA10vtx"  ,ma12 ,pt12,wm );
+	    //if(eventVtxExist && eventV0AND)
+	    FillHistogram("hMiMassPtA10V0AND",ma12 ,pt12,wm );
+	    //if(eventPileup)
+	    FillHistogram("hMiMassPtA10PU"   ,ma12 ,pt12 );
+	  
+	   //Photon detection efficiency 
+	    FillHistogram("hMinv_all_all_mix", ma12,ph1->Pt());
+	    
+	    if(!ph1->IsDispOK()) FillHistogram("hMinv_antidisp_all_mix",ma12,ph1->Pt());
+	    if(ph1->IsDispOK()) FillHistogram("hMinv_disp_all_mix", ma12,ph1->Pt());
+
+    	if(!ph1->IsCPVOK()) FillHistogram("hMinv_anticpv_all_mix",ma12,ph1->Pt());
+    	if(ph1->IsCPVOK())  FillHistogram("hMinv_cpv_all_mix", ma12,ph1->Pt());  
+
+        if(!ph1->IsCPVOK() && !ph1->IsDispOK())FillHistogram("hMinv_antiboth_all_mix",ma12,ph1->Pt());
+	    if(ph1->IsCPVOK()  && ph1->IsDispOK()) FillHistogram("hMinv_both_all_mix ",ma12,ph1->Pt());
+
+	        
 
         if(ph1->IsCPVOK())  FillHistogram("hMiMassSingle_cpv", ma12, ph1->Pt(), wm) ;
         if(ph2->IsCPVOK())  FillHistogram("hMiMassSingle_cpv", ma12, ph2->Pt(), wm) ;
@@ -1751,8 +1811,8 @@ Int_t AliAnalysisTaskGammaPHOSPP::TestTrack(AliAODTrack *track)
 //=======================================
 Double_t AliAnalysisTaskGammaPHOSPP::Weight(AliAODMCParticle *particleAtVertex)
 {
-
-   if(!fMCArray) 
+   //mt scaling for Run2 MC production
+  // if(!fMCArray) 
      return 1.0;
            
    if(TMath::Abs(particleAtVertex->GetPdgCode()) == 11 ||
@@ -1761,23 +1821,35 @@ Double_t AliAnalysisTaskGammaPHOSPP::Weight(AliAODMCParticle *particleAtVertex)
      
    if(TMath::Abs(particleAtVertex->GetPdgCode()) == 111 || 
       TMath::Abs(particleAtVertex->GetPdgCode()) == 211 )
+   {   
       fWeightFunction2->SetParameters(0.611073, -0.0222529, 0.190541, -0.416579, 0.396059, 0.611073);
+      if(fEvent->GetRunNumber() > 224994)
+        fWeightFunction2->SetParameters(-1898145.927074, 1512431.091696, 1512429.447368, 1431049.286442, 1768909.557935, -0.000019); 
+   }   
     else  if(TMath::Abs(particleAtVertex->GetPdgCode()) == 221 || 
              TMath::Abs(particleAtVertex->GetPdgCode()) == 331 ||
              TMath::Abs(particleAtVertex->GetPdgCode()) == 223 )
+          {   
              fWeightFunction2->SetParameters(0.0601459, 0, 4.11665, 0, 6.46838, -0.00319589);
+             if(fEvent->GetRunNumber() > 224994)
+               fWeightFunction2->SetParameters(-1265877.867787, 1563067.911793, 1563066.267448, 1257231.385898, 1595091.656538, -0.002225);
+          }   
           else  if(TMath::Abs(particleAtVertex->GetPdgCode()) == 130 ||
                     TMath::Abs(particleAtVertex->GetPdgCode()) == 310 ||
                     TMath::Abs(particleAtVertex->GetPdgCode()) == 311 ||
                     TMath::Abs(particleAtVertex->GetPdgCode()) == 321 )
+                {    
                     fWeightFunction2->SetParameters(0.708656, 0.355564, -0.00468263, 0.0570132, 0.076876, 0.0382327);
+                    if(fEvent->GetRunNumber() > 224994)
+                      fWeightFunction2->SetParameters(-1898145.927074, 1512431.091696, 1512429.447368, 1431049.286442, 1768909.557935, -0.000019);                   
+                }     
                 else if(TMath::Abs(particleAtVertex->GetPdgCode()) > 1000)
                         fWeightFunction2->SetParameters(0.215726, 0.292934, 0.163074, -0.460113, 0.219988, -0.0903996);
                      else fWeightFunction2->SetParameters(1.0, 0., 0., 0., 0., 0.);
               
                                   
-   if(fEvent->GetRunNumber() > 224994)
-     return fWeightFunction3->Eval(particleAtVertex->Pt());
+  // if(fEvent->GetRunNumber() > 224994)
+  //   return fWeightFunction3->Eval(particleAtVertex->Pt());
      //fWeightFunction2->SetParameters(-5.4392, 6.6713, 3.12637, 8.11749, 4.17771, 0.0102885);
 
 

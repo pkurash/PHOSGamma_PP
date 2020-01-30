@@ -11,7 +11,8 @@ void LoadEnv();
 void runTaskGammaPHOS13TeV( Bool_t isMC    =  kFALSE,
                            TString period  = "LHC16g", 
                            TString runmode = "terminate",
-                           Bool_t  local    = kTRUE)
+                           Bool_t  local   = kTRUE,
+                           TString pass    = "pass1" )
 {
       
     LoadEnv();
@@ -22,29 +23,17 @@ void runTaskGammaPHOS13TeV( Bool_t isMC    =  kFALSE,
     AliAODInputHandler *aodH = new AliAODInputHandler();
     mgr->SetInputEventHandler(aodH);
     
-    const char*  tenderOption = isMC ? "Run2Default" : "";
+    const char*  tenderOption = isMC ? "Run2NoNcellCut" : "Run2Tune";
     Int_t        tenderPass   = 1;
     Int_t        recoPass   = 1;
 
-    AliPHOSTenderTask *tenderPHOS = reinterpret_cast<AliPHOSTenderTask *>(gInterpreter->ExecuteMacro(Form("$ALICE_PHYSICS/PWGGA/PHOSTasks/PHOS_PbPb/AddAODPHOSTender.C(\"%s\", \"%s\", \"%s\", %d, %d)", "PHOSTenderTask","PHOStender",tenderOption, tenderPass, isMC)));
+    AliPHOSTenderTask *tenderPHOS = reinterpret_cast<AliPHOSTenderTask *>(gInterpreter->ExecuteMacro(Form("$ALICE_PHYSICS/PWGGA/PHOSTasks/PHOS_PbPb/AddAODPHOSTender.C(\"%s\", \"%s\", \"%s\", %d, %d)", "PHOSTenderTask","PHOStender", tenderOption, tenderPass, isMC)));
 
-    AliPHOSTenderSupply * supply = tenderPHOS->GetPHOSTenderSupply();
-    supply->ForceUsingBadMap("alien:///alice/cern.ch/user/p/pkurash/BadMap_LHC16-updated.root");
-
-    TString nonlinearity = isMC ? "Run2Tune" : "Run2TuneMC";
-    supply->SetNonlinearityVersion(nonlinearity); 
+    TString nonlinearity = isMC ? "Run2TuneMCNoNcell" : "Run2Tune";
+    tenderPHOS->GetPHOSTenderSupply()->SetNonlinearityVersion(nonlinearity) ;
+ 
     if(isMC)
-    {
-       Double_t NonlinPar[3]={1.02, -0.035, 0.95};
-       supply->SetNonlinearityParams(3, NonlinPar);
-    }
-
-    // Use custom Zero Suppression threshold if needed
-    if(isMC)
-    {
-      Double_t zs_threshold = 0.020;
-      supply->ApplyZeroSuppression(zs_threshold); 
-    }
+      tenderPHOS->GetPHOSTenderSupply()->ApplyZeroSuppression(0.020);
 
 
     TMacro addresp(gSystem->ExpandPathName("$ALICE_ROOT/ANALYSIS/macros/AddTaskPIDResponse.C"));
@@ -73,7 +62,10 @@ void runTaskGammaPHOS13TeV( Bool_t isMC    =  kFALSE,
         // if you want to run locally, we need to define some input
         TChain* chain = new TChain("aodTree");
         if(isMC)
+        {
            chain->Add("alien:///alice/sim/2017/LHC17d20a1_extra/258270/AOD/045/AliAOD.root");        
+           chain->Add("alien:///alice/sim/2017/LHC17d20a1_extra/258270/AOD/046/AliAOD.root");
+        }   
         else
            chain->Add("alien:///alice/data/2016/LHC16g/000254128/pass1/AOD208/0031/AliAOD.root");
 
@@ -88,7 +80,7 @@ void runTaskGammaPHOS13TeV( Bool_t isMC    =  kFALSE,
         alienHandler->SetAnalysisSource("AliAnalysisTaskGammaPHOSPP.cxx");
         // select the aliphysics version. all other packages
         // are LOADED AUTOMATICALLY!
-        alienHandler->SetAliPhysicsVersion("vAN-20190322_ROOT6-1");
+        alienHandler->SetAliPhysicsVersion("vAN-20190821_ROOT6-1");
         alienHandler->SetAPIVersion("V1.1x");
         
         
@@ -107,14 +99,15 @@ void runTaskGammaPHOS13TeV( Bool_t isMC    =  kFALSE,
         else
         {
            alienHandler->SetGridDataDir(Form("/alice/data/%d/%s", year, period.Data()));
-          if(!period.Contains("LHC16k") && !period.Contains("LHC16l") )
-           alienHandler->SetDataPattern("/pass1/AOD208/*/AliAOD.root");
-          else
-           alienHandler->SetDataPattern("/pass2/AOD208/*/AliAOD.root");
+          // alienHandler->SetDataPattern(Form("/%s/AOD208/*/AliAOD.root", pass.Data()));
+           alienHandler->SetDataPattern(Form("/%s/AOD/*/AliAOD.root", pass.Data()));
            alienHandler->SetRunPrefix("000");
         }
         // define the output folders
-        alienHandler->SetGridWorkingDir(Form("pp_Analysis/%s", period.Data()));
+        if(isMC)
+          alienHandler->SetGridWorkingDir(Form("pp_Analysis/%s", period.Data()));
+        else
+          alienHandler->SetGridWorkingDir(Form("pp_Analysis/%s_%s", period.Data(), pass.Data()));            
         alienHandler->SetGridOutputDir("output");
 
         // Add runs by numbers
@@ -124,7 +117,7 @@ void runTaskGammaPHOS13TeV( Bool_t isMC    =  kFALSE,
         if(isMC)
           ff.open(Form("datasets/runs_%s.dat", period.Data()));
         else  
-          ff.open(Form("datasets/%s-pass1.txt", period.Data()));
+          ff.open(Form("datasets/%s-%s.txt", period.Data(), pass.Data()));
         while( !ff.eof() )
         {
          ff>>Nrun[nn];  

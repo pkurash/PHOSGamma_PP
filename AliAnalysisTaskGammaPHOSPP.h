@@ -123,6 +123,11 @@ private:
   Int_t fInPHOS;               // number of PHOS clusters
   Int_t fInPHOS2;              // number of PHOS clusters
   Int_t fEventCentrality;      // number of analyzed events
+  
+  Bool_t fEventVtxExist;  
+  Bool_t fEventVtxZ10cm;
+  Bool_t fEventPileup;
+  Bool_t fEventV0AND; 
 
   AliAODEvent *fEvent;
   TClonesArray *fMCArray;

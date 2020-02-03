@@ -97,7 +97,7 @@ void runTaskGammaPHOS7TeV( Bool_t isMC    =  kFALSE,
         
         // select the aliphysics version. all other packages
         // are LOADED AUTOMATICALLY!
-        alienHandler->SetAliPhysicsVersion("vAN-20190322_ROOT6-1");
+        alienHandler->SetAliPhysicsVersion("vAN-20200131_ROOT6-1");
         // set the Alien API version
         alienHandler->SetAPIVersion("V1.1x");
         

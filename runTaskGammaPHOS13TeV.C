@@ -88,7 +88,7 @@ void runTaskGammaPHOS13TeV( Bool_t isMC    =  kFALSE,
         alienHandler->SetAnalysisSource("AliAnalysisTaskGammaPHOSPP.cxx");
         // select the aliphysics version. all other packages
         // are LOADED AUTOMATICALLY!
-        alienHandler->SetAliPhysicsVersion("vAN-20190322_ROOT6-1");
+        alienHandler->SetAliPhysicsVersion("vAN-20200131_ROOT6-1");
         alienHandler->SetAPIVersion("V1.1x");
         
         

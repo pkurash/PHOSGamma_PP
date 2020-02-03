@@ -494,7 +494,23 @@ void AliAnalysisTaskGammaPHOSPP::UserCreateOutputObjects()
   fOutputContainer->Add(new TH1F("hTracksOfOthers", "Other clusters", nPt,ptMin,ptMax));
   fOutputContainer->Add(new TH2F("hTracksOfOthers_disp", "Other clusters, Disp cut", nPt,ptMin,ptMax,1000,0.,100.));
   
+  fOutputContainer->Add(new TH1F("hClustPt_peak_all",  "Photons within the #pi^{0} peak, no cuts", nPt,ptMin,ptMax));
+  fOutputContainer->Add(new TH1F("hClustPt_peak_cpv",  "Photons within the #pi^{0} peak, cpv", nPt,ptMin,ptMax));  
+  fOutputContainer->Add(new TH1F("hClustPt_peak_disp", "Photons within the #pi^{0} peak, disp", nPt,ptMin,ptMax));
+  fOutputContainer->Add(new TH1F("hClustPt_peak_both", "Photons within the #pi^{0} peak, disp+cpv", nPt,ptMin,ptMax));
 
+  fOutputContainer->Add(new TH1F("hClustPt_peak_anticpv",  "Photons within the #pi^{0} peak, anti cpv", nPt,ptMin,ptMax));
+  fOutputContainer->Add(new TH1F("hClustPt_peak_antidisp",  "Photons within the #pi^{0} peak, anti disp", nPt,ptMin,ptMax));  
+  fOutputContainer->Add(new TH1F("hClustPt_peak_antiboth",  "Photons within the #pi^{0} peak, anti both+cpv", nPt,ptMin,ptMax));  
+  
+  Sumw2Histogram("hClustPt_peak_all");
+  Sumw2Histogram("hClustPt_peak_cpv");
+  Sumw2Histogram("hClustPt_peak_anticpv");
+  Sumw2Histogram("hClustPt_peak_disp");
+  Sumw2Histogram("hClustPt_peak_antidisp");
+  Sumw2Histogram("hClustPt_peak_both");
+  Sumw2Histogram("hClustPt_peak_antiboth");
+  
 //=================
 
   fOutputContainer2->Add(new TH2F("hTracksOfPi_OneSigma_label", "PDG #pi^{+}-s vs p_{T}", nPt,ptMin,ptMax, 8000, -4000, 4000));
@@ -1442,7 +1458,24 @@ void AliAnalysisTaskGammaPHOSPP::FillTwoPhotonHistograms()
 	       FillHistogram("hMinv_anticpv_all", ma12, ph1->Pt());
         if(ph1->IsCPVOK()) 
            FillHistogram("hMinv_cpv_all", ma12, ph1->Pt());
-
+           
+        if (PhotonWithinPeak(ma12, pt12))
+        { 
+             FillHistogram("hClustPt_peak_all", ph1->Pt()); 
+             if (ph1->IsCPVOK()) 
+                 FillHistogram("hClustPt_peak_cpv", ph1->Pt()); 
+             if (!ph1->IsCPVOK())
+                 FillHistogram("hClustPt_peak_anticpv", ph1->Pt());           
+             if (ph1->IsDispOK()) 
+                 FillHistogram("hClustPt_peak_disp", ph1->Pt());  
+             if (!ph1->IsDispOK())
+                 FillHistogram("hClustPt_peak_antidisp", ph1->Pt());      
+             if (ph1->IsCPVOK() && ph1->IsDispOK()) 
+                 FillHistogram("hClustPt_peak_both", ph1->Pt());  
+             if (!ph1->IsCPVOK() && !ph1->IsDispOK())
+                 FillHistogram("hClustPt_peak_antiboth", ph1->Pt());     
+        }    
+             
         if(!ph1->IsCPVOK() && !ph1->IsDispOK())
            FillHistogram("hMinv_antiboth_all", ma12, ph1->Pt());
 	    if(ph1->IsCPVOK()  && ph1->IsDispOK()) 
